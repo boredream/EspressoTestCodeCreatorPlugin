@@ -1,0 +1,37 @@
+<idea-plugin version="2">
+  <id>com.boredream.plugin.espressocreator</id>
+  <name>EspressoCodeCreator</name>
+  <version>1.0</version>
+  <vendor email="boredream@163.com" url="https://github.com/boredream/EspressoCodeCreatorPlugin">Github</vendor>
+
+  <description><![CDATA[
+      auto create code 4 testing Android using Espresso
+    ]]></description>
+
+  <change-notes><![CDATA[
+      first version<br>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="103.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <action id="EspressoCodeCreator" class="action.EspressoTestCreatorAction" text="EspressoTestCreator"
+            description="auto create code 4 testing Android using Espresso">
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
+  </actions>
+
+</idea-plugin>
