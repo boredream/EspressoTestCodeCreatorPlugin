@@ -3,6 +3,8 @@ package utils;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -14,13 +16,22 @@ import java.util.List;
 
 public class ProjectHelper {
 
-    public static VirtualFile createFileWithGeneratedCode(String fileCode, Project project, String folderPath, String fileName) throws IOException {
-        // 生成路径
-        VirtualFile folder = createFolderIfNotExist(project, folderPath);
-        // 生成文件
-        VirtualFile createdFile = folder.findOrCreateChildData(project, fileName);
-        // 将代码写入文件
-        return setFileContent(project, createdFile, fileCode);
+    public static void createFileWithGeneratedCode(final String fileCode, final Project project, final String folderPath, final String fileName) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // 生成路径
+                    final VirtualFile folder = createFolderIfNotExist(project, folderPath);
+                    // 生成文件
+                    VirtualFile createdFile = folder.findOrCreateChildData(project, fileName);
+                    // 将代码写入文件
+                    setFileContent(project, createdFile, fileCode);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     public static VirtualFile setFileContent(Project project, VirtualFile createdFile, String code) throws IOException {

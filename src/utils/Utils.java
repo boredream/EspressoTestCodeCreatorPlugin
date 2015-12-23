@@ -313,4 +313,9 @@ public class Utils {
         sb.append("\n");
         return sb.toString();
     }
+
+    public static String getFileNameWithoutSuffix(PsiFile file) {
+        String fileName = file.getName();
+        return fileName.substring(0, fileName.lastIndexOf("."));
+    }
 }
