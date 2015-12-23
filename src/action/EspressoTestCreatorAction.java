@@ -5,21 +5,35 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import entity.Element;
+import entity.EspressoAction;
+import entity.EspressoAssertion;
 import form.CustomTestDialog;
 import listener.ICancelListener;
 import listener.IConfirmListener;
+import utils.ProjectHelper;
 import utils.Utils;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class EspressoTestCreatorAction extends BaseGenerateAction implements ICancelListener, IConfirmListener {
+public class EspressoTestCreatorAction extends BaseGenerateAction implements IConfirmListener {
 
     private CustomTestDialog dialog;
+    private Project project;
+    private Editor editor;
+    private PsiFile file;
+    private PsiFile layout;
 
     @SuppressWarnings("unused")
     public EspressoTestCreatorAction() {
@@ -33,16 +47,16 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICa
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        Project project = event.getData(PlatformDataKeys.PROJECT);
-        Editor editor = event.getData(PlatformDataKeys.EDITOR);
+        project = event.getData(PlatformDataKeys.PROJECT);
+        editor = event.getData(PlatformDataKeys.EDITOR);
 
         actionPerformedImpl(project, editor);
     }
 
     @Override
     public void actionPerformedImpl(Project project, Editor editor) {
-        PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-        PsiFile layout = Utils.getLayoutFileFromCaret(editor, file);
+        file = PsiUtilBase.getPsiFileInEditor(editor, project);
+        layout = Utils.getLayoutFileFromCaret(editor, file);
 
         if (layout == null) {
             Utils.showErrorNotification(project, "No layout found");
@@ -58,7 +72,7 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICa
     }
 
     private void showDialog(ArrayList<Element> elements) {
-        dialog = new CustomTestDialog(elements);
+        dialog = new CustomTestDialog(elements, this);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
@@ -66,50 +80,30 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICa
     }
 
     @Override
-    public void onCancel() {
-        closeDialog();
-    }
+    public void onConfirm(List<EspressoAction> actions, List<EspressoAssertion> assertions) {
+        // 先创建测试基础路径
+        String androidTestRootPath = "app/src/androidTest/java";
+        // 代码基础路径
+        String fileRootPath = "app/src/main/java";
+        String fileParentPath = file.getVirtualFile().getParent().getPath();
 
-    @Override
-    public void onConfirm(Project project, Editor editor, ArrayList<Element> elements, String mPrefix) {
-        PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-        if (file == null) {
-            return;
-        }
-        PsiFile layout = Utils.getLayoutFileFromCaret(editor, file);
-
-        closeDialog();
-
-        // count selected elements
-        int cnt = 0;
-        for (Element element : elements) {
-            if (element.used) {
-                cnt++;
-            }
+        // 将代码基础路径替换为测试基础路径,创建测试路径中对应的文件测试类
+        String testFilePath = androidTestRootPath + fileParentPath.split(fileRootPath)[1];
+        try {
+            ProjectHelper.createFileWithGeneratedCode("public class Test {}", project, testFilePath, "Test.java");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        if (cnt > 0) { // generate injections
+        if (actions.size() > 0 || assertions.size() > 0) { // generate injections
             if (layout == null) {
                 return;
             }
 //            new LayoutCreator(file, getTargetClass(editor, file), "Generate Injections", elements, layout.getName()).execute();
 
-            if (cnt == 1) {
-                Utils.showInfoNotification(project, "One injection added to " + file.getName());
-            } else {
-                Utils.showInfoNotification(project, String.valueOf(cnt) + " injections added to " + file.getName());
-            }
-        } else { // just notify user about no element selected
-            Utils.showInfoNotification(project, "No injection was selected");
+        } else {
+            Utils.showInfoNotification(project, "No actions and assertions");
         }
     }
 
-    protected void closeDialog() {
-        if (dialog == null) {
-            return;
-        }
-
-        dialog.setVisible(false);
-        dialog.dispose();
-    }
 }

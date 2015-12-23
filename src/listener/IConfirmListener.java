@@ -1,12 +1,11 @@
 package listener;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import entity.Element;
+import entity.EspressoAction;
+import entity.EspressoAssertion;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface IConfirmListener {
 
-    void onConfirm(Project project, Editor editor, ArrayList<Element> elements, String mPrefix);
+    void onConfirm(List<EspressoAction> actions, List<EspressoAssertion> assertions);
 }

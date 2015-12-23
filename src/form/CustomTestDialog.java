@@ -4,6 +4,7 @@ import com.intellij.ui.components.JBScrollPane;
 import entity.Element;
 import entity.EspressoAction;
 import entity.EspressoAssertion;
+import listener.IConfirmListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,8 +25,11 @@ public class CustomTestDialog extends JDialog {
     private List<EspressoAction> espressoActions = new ArrayList<>();
     private List<EspressoAssertion> espressoAssertions = new ArrayList<>();
 
-    public CustomTestDialog(final List<Element> elements) {
+    private IConfirmListener confirmListener;
+
+    public CustomTestDialog(final List<Element> elements, IConfirmListener confirmListener) {
         this.elements = elements;
+        this.confirmListener = confirmListener;
 
         setContentPane(contentPane);
         setModal(true);
@@ -199,6 +203,10 @@ public class CustomTestDialog extends JDialog {
 
     private void onOK() {
         dispose();
+
+        if(confirmListener != null) {
+            confirmListener.onConfirm(espressoActions, espressoAssertions);
+        }
     }
 
     private void onCancel() {
