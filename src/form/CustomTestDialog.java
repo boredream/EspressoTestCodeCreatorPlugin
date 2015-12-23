@@ -3,9 +3,9 @@ package form;
 import com.intellij.ui.components.JBScrollPane;
 import entity.Element;
 import entity.EspressoAction;
+import entity.EspressoAssertion;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -13,25 +13,35 @@ import java.util.List;
 
 public class CustomTestDialog extends JDialog {
     private JPanel contentPane;
-    private JButton addButton;
+    private JButton btnAddAction;
     private JPanel panelActions;
+    private JButton btnAddAssertion;
+    private JPanel panelAssertions;
     private JButton buttonOK;
     private JButton buttonCancel;
 
     private List<Element> elements;
-    private List<EspressoAction> espressoActions;
+    private List<EspressoAction> espressoActions = new ArrayList<>();
+    private List<EspressoAssertion> espressoAssertions = new ArrayList<>();
 
-    public CustomTestDialog(List<Element> elements) {
+    public CustomTestDialog(final List<Element> elements) {
         this.elements = elements;
 
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
 
-        addButton.addActionListener(new ActionListener() {
+        btnAddAction.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                showDialog();
+                showViews4ActionDialog(elements);
+            }
+        });
+
+        btnAddAssertion.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showViews4AssertionDialog(elements);
             }
         });
 
@@ -65,7 +75,6 @@ public class CustomTestDialog extends JDialog {
 
     private void initActions() {
         // 填充数据
-        espressoActions = new ArrayList<>();
         for (Element element : elements) {
             EspressoAction action = new EspressoAction(element);
             espressoActions.add(action);
@@ -111,7 +120,38 @@ public class CustomTestDialog extends JDialog {
         pack();
     }
 
-    private void showDialog() {
+    private void fillAssertionsList() {
+        panelAssertions.removeAll();
+        panelAssertions.add(new AssertionHeader(), BorderLayout.NORTH);
+
+        JPanel viewListPanel = new JPanel();
+        viewListPanel.setLayout(new BoxLayout(viewListPanel, BoxLayout.PAGE_AXIS));
+        viewListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        for (int i = 0; i < espressoAssertions.size(); i++) {
+            final EspressoAssertion assertion = espressoAssertions.get(i);
+            final AssertionItem assertionItem = new AssertionItem(assertion);
+            assertionItem.setRemoveListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    espressoAssertions.remove(assertion);
+                    fillAssertionsList();
+                }
+            });
+            if (i > 0) {
+                viewListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
+            viewListPanel.add(assertionItem);
+        }
+        viewListPanel.add(Box.createVerticalGlue());
+        viewListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        JBScrollPane scrollPane = new JBScrollPane(viewListPanel);
+        panelAssertions.add(scrollPane, BorderLayout.CENTER);
+
+        pack();
+    }
+
+    private void showViews4ActionDialog(List<Element> elements) {
         ViewListDialog dialog = new ViewListDialog(elements,
                 new ViewListDialog.OnViewSelectedListener() {
             @Override
@@ -125,10 +165,36 @@ public class CustomTestDialog extends JDialog {
         dialog.setVisible(true);
     }
 
+    private void showViews4AssertionDialog(List<Element> elements) {
+        List<Element> element4assertion = new ArrayList<>();
+        Element element = new Element("Toast", "@android:id/message");
+        element.fieldName = "Toast";
+        element4assertion.add(element);
+        element4assertion.addAll(elements);
+
+        ViewListDialog dialog = new ViewListDialog(element4assertion,
+                new ViewListDialog.OnViewSelectedListener() {
+            @Override
+            public void onViewSelected(Element element) {
+                addAssertion(element);
+            }
+        });
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
     private void addAction(Element element) {
         EspressoAction action = new EspressoAction(element);
         espressoActions.add(action);
         fillActionsList();
+    }
+
+    private void addAssertion(Element element) {
+        EspressoAssertion assertion = new EspressoAssertion(element);
+        espressoAssertions.add(assertion);
+        fillAssertionsList();
     }
 
     private void onOK() {

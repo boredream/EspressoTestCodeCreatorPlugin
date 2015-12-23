@@ -1,14 +1,9 @@
 package form;
 
-import com.intellij.openapi.ui.ComboBox;
 import entity.Element;
-import entity.EspressoAction;
-import org.jdesktop.swingx.JXRadioGroup;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 public class ViewItem extends JPanel {
 

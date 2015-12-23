@@ -3,9 +3,6 @@ package entity;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by moyun on 2015/12/22.
- */
 public class EspressoAction {
 
     public static final String TYPE_NONE = "none";
@@ -18,7 +15,7 @@ public class EspressoAction {
     public static List<String> actions;
     static {
         actions = new ArrayList<>();
-        // actions.add(TYPE_NONE);
+        // assertions.add(TYPE_NONE);
         actions.add(TYPE_CLICK);
         actions.add(TYPE_DOUBLE_CLICK);
         actions.add(TYPE_LONG_CLICK);
