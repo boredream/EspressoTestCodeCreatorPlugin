@@ -5,33 +5,22 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import entity.Element;
 import entity.EspressoAction;
 import entity.EspressoAssertion;
 import form.CustomTestDialog;
-import listener.ICancelListener;
 import listener.IConfirmListener;
 import utils.ProjectHelper;
 import utils.Utils;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
 
 public class EspressoTestCreatorAction extends BaseGenerateAction implements IConfirmListener {
 
@@ -111,6 +100,18 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICo
         sb.append(Utils.formatSingleLine(0, packageStr));
         sb.append("\n");
 
+        // TODO import
+        sb.append(Utils.formatSingleLine(0, "import android.content.Intent;"));
+        sb.append(Utils.formatSingleLine(0, "import android.support.test.rule.ActivityTestRule;"));
+        sb.append(Utils.formatSingleLine(0, "import android.support.test.runner.AndroidJUnit4;"));
+        sb.append("\n");
+        sb.append(Utils.formatSingleLine(0, "import org.junit.Rule;"));
+        sb.append(Utils.formatSingleLine(0, "import org.junit.Test;"));
+        sb.append(Utils.formatSingleLine(0, "import org.junit.runner.RunWith;"));
+        sb.append("\n");
+        sb.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.Espresso.onView;"));
+        sb.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.matcher.ViewMatchers.withId;"));
+
         // class
         sb.append(Utils.formatSingleLine(0, "@org.junit.runner.RunWith(AndroidJUnit4.class)"));
         sb.append(Utils.formatSingleLine(0, "public class " + testClassName + " {"));
@@ -124,15 +125,10 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICo
         sb.append(Utils.formatSingleLine(1, "public void test() {"));
         sb.append(Utils.formatSingleLine(2, "Intent intent = new Intent();"));
         // 判断页面初始化时是否有getExtra,如果有需要在测试代码中putExtra
-        //　userId = getIntent().getLongExtra("userId", 0);
         String getExtraRegex = ".get([\\w]+)Extra\\(\"([\\w_]+)\"";
         Pattern getExtraPattern = Pattern.compile(getExtraRegex);
         Matcher getExtraMatcher = getExtraPattern.matcher(activityContent);
         if (getExtraMatcher.find()) {
-            // Intent intent = new Intent();
-            // intent.putExtra("userId", 1016l);
-            // mActivityRule.launchActivity(intent);
-
             sb.append(Utils.formatSingleLine(2, "// 待测试页面需要Extra数据如下"));
             String type = getExtraMatcher.group(1);
             String key = getExtraMatcher.group(2);

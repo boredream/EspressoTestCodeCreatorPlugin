@@ -13,7 +13,6 @@ import java.awt.event.ItemListener;
 
 public class AssertionItem extends JPanel {
 
-    private EspressoAssertion assertion;
     // ui
     private JLabel labelViewName;
     private JCheckBox cbIsNot;
@@ -30,8 +29,6 @@ public class AssertionItem extends JPanel {
      * @param assertion
      */
     public AssertionItem(final EspressoAssertion assertion) {
-        this.assertion = assertion;
-
         labelViewName = new JLabel(assertion.getTargetElement().fieldName);
         labelViewName.setPreferredSize(new Dimension(100, 26));
 
