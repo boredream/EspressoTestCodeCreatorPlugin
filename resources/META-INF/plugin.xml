@@ -27,7 +27,7 @@
   </extensions>
 
   <actions>
-    <action id="EspressoCodeCreator" class="action.EspressoTestCreatorAction" text="EspressoTestCreator"
+    <action id="EspressoCodeCreator" class="action.EspressoTestCreatorAction" text="EspressoCodeCreator"
             description="auto create code 4 testing Android using Espresso">
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>

@@ -1,17 +1,17 @@
 package utils;
 
-import com.google.common.collect.Lists;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import entity.Element;
 import org.apache.velocity.util.StringUtils;
 
 import java.io.IOException;
-import java.util.List;
+import java.nio.charset.Charset;
 
 public class ProjectHelper {
 
@@ -34,7 +34,8 @@ public class ProjectHelper {
     }
 
     public static VirtualFile setFileContent(Project project, VirtualFile createdFile, String code) throws IOException {
-        createdFile.setBinaryContent(code.getBytes());
+        Charset charset = createdFile.getCharset();
+        createdFile.setBinaryContent(code.getBytes(charset));
         FileEditorManager.getInstance(project).openFile(createdFile, true);
         return createdFile;
     }
@@ -53,16 +54,35 @@ public class ProjectHelper {
         return directory;
     }
 
-    public static List<String> getSourceRootPathList(Project project, AnActionEvent event) {
-        List<String> sourceRoots = Lists.newArrayList();
-        String projectPath = StringUtils.normalizePath(project.getBasePath());
-        for (VirtualFile virtualFile : getModuleRootManager(event).getSourceRoots(false)) {
-            sourceRoots.add(StringUtils.normalizePath(virtualFile.getPath()).replace(projectPath, ""));
+    public static VirtualFile getAndroidManifest(Project project) {
+        VirtualFile directory = project.getBaseDir();
+        String path = "app/src/main/AndroidManifest.xml";
+        String[] folders = path.split("/");
+        for (String childFolder : folders) {
+            VirtualFile childDirectory = directory.findChild(childFolder);
+            if (childDirectory != null && childDirectory.isDirectory()) {
+                directory = childDirectory;
+            } else {
+                directory = childDirectory;
+                break;
+            }
         }
-        return sourceRoots;
+        return directory;
     }
 
-    private static ModuleRootManager getModuleRootManager(AnActionEvent event) {
-        return ModuleRootManager.getInstance(event.getData(LangDataKeys.MODULE));
+    public static String getComPackageName(Project project) {
+        VirtualFile androidManifest = getAndroidManifest(project);
+        PsiFile file = PsiManager.getInstance(project).findFile(androidManifest);
+        PsiElement rootElement = file.getFirstChild();
+        for (PsiElement element : rootElement.getChildren()) {
+            if (element instanceof XmlTag) {
+                XmlTag tag = (XmlTag) element;
+                XmlAttribute attr = tag.getAttribute("package");
+                if(attr != null) {
+                    return attr.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

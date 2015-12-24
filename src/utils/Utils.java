@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -94,7 +95,7 @@ public class Utils {
 
     }
 
-    private static PsiFile resolveLayoutResourceFile(PsiElement element, Project project, String name) {
+    public static PsiFile resolveLayoutResourceFile(PsiElement element, Project project, String name) {
         // restricting the search to the current module - searching the whole project could return wrong layouts
         Module module = ModuleUtil.findModuleForPsiElement(element);
         PsiFile[] files = null;

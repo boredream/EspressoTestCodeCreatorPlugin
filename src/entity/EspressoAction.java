@@ -75,4 +75,5 @@ public class EspressoAction {
     public void setTypeText(String typeText) {
         this.typeText = typeText;
     }
+
 }

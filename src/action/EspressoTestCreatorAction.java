@@ -93,99 +93,137 @@ public class EspressoTestCreatorAction extends BaseGenerateAction implements ICo
         String activityClassName = Utils.getFileNameWithoutSuffix(file);
         String testClassName = activityClassName + "Test";
 
-        StringBuilder sb = new StringBuilder();
-
         // package
+        StringBuilder sbPackage = new StringBuilder();
         String packageStr = file.getFirstChild().getText();
-        sb.append(Utils.formatSingleLine(0, packageStr));
-        sb.append("\n");
+        sbPackage.append(Utils.formatSingleLine(0, packageStr));
+        sbPackage.append("\n");
 
-        // TODO import
-        sb.append(Utils.formatSingleLine(0, "import android.content.Intent;"));
-        sb.append(Utils.formatSingleLine(0, "import android.support.test.rule.ActivityTestRule;"));
-        sb.append(Utils.formatSingleLine(0, "import android.support.test.runner.AndroidJUnit4;"));
-        sb.append("\n");
-        sb.append(Utils.formatSingleLine(0, "import org.junit.Rule;"));
-        sb.append(Utils.formatSingleLine(0, "import org.junit.Test;"));
-        sb.append(Utils.formatSingleLine(0, "import org.junit.runner.RunWith;"));
-        sb.append("\n");
-        sb.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.Espresso.onView;"));
-        sb.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.matcher.ViewMatchers.withId;"));
+        // import
+        StringBuilder sbImport = new StringBuilder();
+        sbImport.append(Utils.formatSingleLine(0, "import android.content.Intent;"));
+        sbImport.append(Utils.formatSingleLine(0, "import android.support.test.rule.ActivityTestRule;"));
+        sbImport.append(Utils.formatSingleLine(0, "import android.support.test.runner.AndroidJUnit4;"));
+        String comPackageName = ProjectHelper.getComPackageName(project);
+        sbImport.append(Utils.formatSingleLine(0, "import " + comPackageName + ".R;"));
+        sbImport.append("\n");
+        sbImport.append(Utils.formatSingleLine(0, "import org.junit.Rule;"));
+        sbImport.append(Utils.formatSingleLine(0, "import org.junit.Test;"));
+        sbImport.append(Utils.formatSingleLine(0, "import org.junit.runner.RunWith;"));
+        sbImport.append("\n");
+        sbImport.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.Espresso.onView;"));
+        sbImport.append(Utils.formatSingleLine(0, "import static android.support.test.espresso.matcher.ViewMatchers.withId;"));
 
         // class
-        sb.append(Utils.formatSingleLine(0, "@org.junit.runner.RunWith(AndroidJUnit4.class)"));
-        sb.append(Utils.formatSingleLine(0, "public class " + testClassName + " {"));
-        sb.append("\n");
-        sb.append(Utils.formatSingleLine(1, "@Rule"));
-        sb.append(Utils.formatSingleLine(1, "public ActivityTestRule<" + activityClassName +
+        StringBuilder sbClass = new StringBuilder();
+        sbClass.append(Utils.formatSingleLine(0, "@RunWith(AndroidJUnit4.class)"));
+        sbClass.append(Utils.formatSingleLine(0, "public class " + testClassName + " {"));
+        sbClass.append("\n");
+        sbClass.append(Utils.formatSingleLine(1, "@Rule"));
+        sbClass.append(Utils.formatSingleLine(1, "public ActivityTestRule<" + activityClassName +
                 "> mActivityRule = new ActivityTestRule<>(" + activityClassName + ".class, true, false);"));
-        sb.append("\n");
+        sbClass.append("\n");
 
-        sb.append(Utils.formatSingleLine(1, "@Test"));
-        sb.append(Utils.formatSingleLine(1, "public void test() {"));
-        sb.append(Utils.formatSingleLine(2, "Intent intent = new Intent();"));
+        sbClass.append(Utils.formatSingleLine(1, "@Test"));
+        sbClass.append(Utils.formatSingleLine(1, "public void test() {"));
+        sbClass.append(Utils.formatSingleLine(2, "Intent intent = new Intent();"));
         // 判断页面初始化时是否有getExtra,如果有需要在测试代码中putExtra
         String getExtraRegex = ".get([\\w]+)Extra\\(\"([\\w_]+)\"";
         Pattern getExtraPattern = Pattern.compile(getExtraRegex);
         Matcher getExtraMatcher = getExtraPattern.matcher(activityContent);
         if (getExtraMatcher.find()) {
-            sb.append(Utils.formatSingleLine(2, "// 待测试页面需要Extra数据如下"));
+            sbClass.append(Utils.formatSingleLine(2, "// 待测试页面需要Extra数据如下"));
             String type = getExtraMatcher.group(1);
             String key = getExtraMatcher.group(2);
-            sb.append(Utils.formatSingleLine(2, "intent.putExtra(\"" + key + "\", 添加" + type + "类型的值);"));
+            sbClass.append(Utils.formatSingleLine(2, "intent.putExtra(\"" + key + "\", 添加" + type + "类型的值);"));
         }
-        sb.append(Utils.formatSingleLine(2, "mActivityRule.launchActivity(intent);"));
-        sb.append("\n");
+        sbClass.append(Utils.formatSingleLine(2, "mActivityRule.launchActivity(intent);"));
+        sbClass.append("\n");
 
-        sb.append(Utils.formatSingleLine(2, "// actions"));
+        sbClass.append(Utils.formatSingleLine(2, "// actions"));
         // 用onView定位控件,并执行动作
         for (EspressoAction ea : actions) {
             String action = "";
             if (ea.getActionName().equals(EspressoAction.TYPE_TYPE_TEXT)) {
                 action = ".perform(typeText(\"" + ea.getTypeText() + "\"), closeSoftKeyboard())";
+
+                appendImport(sbImport, "import static android.support.test.espresso.action.ViewActions.typeText;");
+                appendImport(sbImport, "import static android.support.test.espresso.action.ViewActions.closeSoftKeyboard;");
             } else if (ea.getActionName().equals(EspressoAction.TYPE_CLICK)) {
                 action = ".perform(click())";
+
+                appendImport(sbImport, "import static android.support.test.espresso.action.ViewActions.click;");
             } else if (ea.getActionName().equals(EspressoAction.TYPE_DOUBLE_CLICK)) {
                 action = ".perform(doubleClick())";
+
+                appendImport(sbImport, "import static android.support.test.espresso.action.ViewActions.doubleClick;");
             } else if (ea.getActionName().equals(EspressoAction.TYPE_LONG_CLICK)) {
                 action = ".perform(longClick())";
+
+                appendImport(sbImport, "import static android.support.test.espresso.action.ViewActions.longClick;");
             }
-            sb.append(Utils.formatSingleLine(2, "onView(withId(" + ea.getTargetElement().getFullID() + "))" + action + ";"));
+            sbClass.append(Utils.formatSingleLine(2, "onView(withId(" + ea.getTargetElement().getFullID() + "))" + action + ";"));
         }
-        sb.append("\n");
+        sbClass.append("\n");
 
         // 断言结果
-        sb.append(Utils.formatSingleLine(2, "// assertions"));
+        sbClass.append(Utils.formatSingleLine(2, "// assertions"));
         for (EspressoAssertion ea : assertions) {
             String assertion = "";
             if (ea.getAssertionName().equals(EspressoAssertion.TYPE_IS_DISPLAYED)) {
-                assertion = appendIsNotAssertionCode(ea, "isDisplayed()");
+                assertion = appendIsNotAssertionCode(ea, "isDisplayed()", sbImport);
+
+                appendImport(sbImport, "import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;");
             } else if (ea.getAssertionName().equals(EspressoAssertion.TYPE_IS_CHECKED)) {
-                assertion = appendIsNotAssertionCode(ea, "isChecked()");
+                assertion = appendIsNotAssertionCode(ea, "isChecked()", sbImport);
+
+                appendImport(sbImport, "import static android.support.test.espresso.matcher.ViewMatchers.isChecked;");
             } else if (ea.getAssertionName().equals(EspressoAssertion.TYPE_IS_SELECTED)) {
-                assertion = appendIsNotAssertionCode(ea, "isSelected()");
+                assertion = appendIsNotAssertionCode(ea, "isSelected()", sbImport);
+
+                appendImport(sbImport, "import static android.support.test.espresso.matcher.ViewMatchers.isSelected;");
             } else if (ea.getAssertionName().equals(EspressoAssertion.TYPE_WITH_TEXT)) {
                 assertion = "withText(\"" + ea.getAssertionText() + "\")";
             }
-            assertion = ".check(matches(" + appendIsNotAssertionCode(ea, assertion) + "));";
+            assertion = ".check(matches(" + appendIsNotAssertionCode(ea, assertion, sbImport) + "));";
 
-            sb.append(Utils.formatSingleLine(2, "onView(withId(" + ea.getTargetElement().getFullID() + "))"));
-            if(ea.getTargetElement().name.equals("Toast")) {
+            appendImport(sbImport, "import static android.support.test.espresso.assertion.ViewAssertions.matches;");
+            appendImport(sbImport, "import static android.support.test.espresso.matcher.ViewMatchers.withText;");
+
+            sbClass.append(Utils.formatSingleLine(2, "onView(withId(" + ea.getTargetElement().getFullID() + "))"));
+            if (ea.getTargetElement().name.equals("Toast")) {
                 String inRoot = ".inRoot(withDecorView(not(is(mActivityRule.getActivity().getWindow().getDecorView()))))";
-                sb.append(Utils.formatSingleLine(3, inRoot));
+                sbClass.append(Utils.formatSingleLine(3, inRoot));
+
+                appendImport(sbImport, "import static android.support.test.espresso.matcher.RootMatchers.withDecorView;");
+                appendImport(sbImport, "import static org.hamcrest.core.IsNot.not;");
+                appendImport(sbImport, "import static org.hamcrest.core.Is.is;");
             }
-            sb.append(Utils.formatSingleLine(3, assertion));
+            sbClass.append(Utils.formatSingleLine(3, assertion));
         }
 
-        sb.append(Utils.formatSingleLine(1, "}"));
-        sb.append(Utils.formatSingleLine(0, "}"));
+        sbImport.append("\n");
+        sbClass.append(Utils.formatSingleLine(1, "}"));
+        sbClass.append(Utils.formatSingleLine(0, "}"));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(sbPackage);
+        sb.append(sbImport);
+        sb.append(sbClass);
 
         // create
         ProjectHelper.createFileWithGeneratedCode(sb.toString(), project, testFilePath, testClassName + ".java");
     }
 
-    private String appendIsNotAssertionCode(EspressoAssertion ea, String oldAssertion) {
+    private void appendImport(StringBuilder sbImport, String im) {
+        if (sbImport.indexOf(im) == -1) {
+            sbImport.append(Utils.formatSingleLine(0, im));
+        }
+    }
+
+    private String appendIsNotAssertionCode(EspressoAssertion ea, String oldAssertion, StringBuilder sbImport) {
         if (ea.isNot()) {
+            appendImport(sbImport, "import static org.hamcrest.core.IsNot.not;");
             return "not(" + oldAssertion + ")";
         } else {
             return oldAssertion;
